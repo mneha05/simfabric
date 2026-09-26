@@ -1,0 +1,20 @@
+{
+  "measurements": [
+    {
+      "name": "hetero-serve / Tesla T4",
+      "gpu": "NVIDIA Tesla T4",
+      "theoretical_gbps": 320.0,
+      "measured_gbps": 176.0,
+      "measurement_basis": "55% of peak memory bandwidth",
+      "source_note": "Measured efficiency reported from the user's hetero-serve paged-attention work; 176 GB/s is derived from 0.55 x NVIDIA's 320 GB/s T4 peak specification."
+    },
+    {
+      "name": "gb10-attn / NVIDIA GB10",
+      "gpu": "NVIDIA GB10",
+      "theoretical_gbps": 273.0,
+      "measured_gbps": 231.3,
+      "measurement_basis": "peak measured bandwidth",
+      "source_note": "Measured peak from the user's gb10-attn paged-attention decode work."
+    }
+  ]
+}
