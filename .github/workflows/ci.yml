@@ -1,5 +1,6 @@
 name: CI
 on: [push, pull_request]
+
 jobs:
   python:
     runs-on: ubuntu-latest
@@ -10,10 +11,36 @@ jobs:
       - run: pip install -e . pytest
       - run: pytest
       - run: simfabric sweep
+      - run: python tools/correlate.py
+
   cpp-core:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
       - run: cmake -S . -B build -G Ninja
       - run: cmake --build build
       - run: ./build/simfabric_core_test
+
+  systemc-tlm:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build official SystemC 3.0.2
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+          git clone --depth 1 --branch 3.0.2 https://github.com/accellera-official/systemc.git /tmp/systemc
+          cmake -S /tmp/systemc -B /tmp/systemc-build -G Ninja             -DCMAKE_BUILD_TYPE=Release             -DCMAKE_INSTALL_PREFIX=/tmp/systemc-install             -DENABLE_EXAMPLES=OFF
+          cmake --build /tmp/systemc-build
+          cmake --install /tmp/systemc-build
+      - name: Build SimFabric against installed SystemC
+        run: |
+          cmake -S . -B build-systemc -G Ninja             -DSIMFABRIC_WITH_SYSTEMC=ON             -DCMAKE_PREFIX_PATH=/tmp/systemc-install
+          cmake --build build-systemc
+      - name: Run TLM simulation
+        run: ./build-systemc/simfabric_systemc | tee build-systemc/tlm.log
+      - name: Verify TLM/analytical correlation
+        run: |
+          grep -q "TLM workload=decode-4MiB" build-systemc/tlm.log
+          grep -q "SystemC/TLM simulation complete" build-systemc/tlm.log
